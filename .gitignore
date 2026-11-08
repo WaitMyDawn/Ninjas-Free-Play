@@ -1,0 +1,70 @@
+### Gradle ###
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/**/out/
+
+.run/
+
+### Eclipse ###
+.apt_generated
+.classpath
+.eclipse/
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/**/bin/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Python Authoring Tools ###
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+### Editor Backups ###
+*.swp
+*.swo
+*~
+*.bbmodel.bak
+*.bbmodel.backup
+*.bbmodel.tmp
+
+### JVM Diagnostics ###
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+
+### Minecraft Modding ###
+run/
+!**/src/**/run/
+runs/
+!**/src/**/runs/
+**/src/generated/**/.cache/
+repo/
+!**/src/**/repo/
+
+### Local Design and Verification Notes ###
+/docs/
+/Spec.md

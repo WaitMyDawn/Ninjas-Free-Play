@@ -1,0 +1,11 @@
+gradle.afterProject { project ->
+    if (project != project.rootProject) return
+    def probe = project.sourceSets.create('cameraSmoke')
+    probe.java.srcDir(project.file('tools/client-smoke/src/main/java'))
+    probe.compileClasspath += project.sourceSets.main.output + project.sourceSets.main.compileClasspath
+    probe.runtimeClasspath += probe.output + probe.compileClasspath + project.sourceSets.main.runtimeClasspath
+    project.runs.client {
+        modSource probe
+        workingDirectory project.layout.buildDirectory.dir('tmp/camera-smoke-instance').get()
+    }
+}

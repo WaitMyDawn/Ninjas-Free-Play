@@ -1,0 +1,134 @@
+{
+  "format_version": 1,
+  "rig": "humanoid_v1",
+  "duration": 1.0,
+  "loop": true,
+  "bones": {
+    "root": {
+      "position": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              0,
+              7,
+              0
+            ]
+          }
+        ]
+      }
+    },
+    "body": {
+      "rotation": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              0.25,
+              0,
+              -0.06
+            ]
+          }
+        ]
+      }
+    },
+    "left_arm": {
+      "rotation": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              0.3,
+              0,
+              -0.25
+            ]
+          }
+        ]
+      },
+      "bend": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": -0.75
+          }
+        ]
+      }
+    },
+    "right_arm": {
+      "rotation": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              -0.45,
+              0,
+              0.15
+            ]
+          }
+        ]
+      },
+      "bend": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": -1.0
+          }
+        ]
+      }
+    },
+    "left_leg": {
+      "rotation": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              -1.4,
+              0.15,
+              -0.1
+            ]
+          }
+        ]
+      },
+      "bend": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": 0.1
+          }
+        ]
+      }
+    },
+    "right_leg": {
+      "rotation": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": [
+              -2.05,
+              -0.1,
+              0.12
+            ]
+          }
+        ]
+      },
+      "bend": {
+        "interpolation": "linear",
+        "keyframes": [
+          {
+            "time": 0,
+            "value": 1.7
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "format_version": 1,
+  "namespace": "ninjas_free_play",
+  "rig": "humanoid_v1",
+  "position_signs": [1, -1, 1],
+  "rotation_signs": [-1, 1, -1],
+  "projects": ["player_movement.bbmodel"],
+  "coordinate_spaces": {"bullet_jump": "launch"},
+  "bones": {
+    "root": {"target": "root", "kind": "transform", "parent": null, "origin": [0, 12, 0]},
+    "body": {"target": "body", "kind": "transform", "parent": "root", "origin": [0, 12, 0]},
+    "head": {"target": "head", "kind": "transform", "parent": "body", "origin": [0, 24, 0]},
+    "left_arm": {"target": "left_arm", "kind": "transform", "parent": "body", "origin": [5, 22, 0]},
+    "right_arm": {"target": "right_arm", "kind": "transform", "parent": "body", "origin": [-5, 22, 0]},
+    "left_forearm": {"target": "left_arm", "kind": "bend", "parent": "left_arm", "origin": [5, 18, 0]},
+    "right_forearm": {"target": "right_arm", "kind": "bend", "parent": "right_arm", "origin": [-5, 18, 0]},
+    "left_leg": {"target": "left_leg", "kind": "transform", "parent": "root", "origin": [1.9, 12, 0]},
+    "right_leg": {"target": "right_leg", "kind": "transform", "parent": "root", "origin": [-1.9, 12, 0]},
+    "left_shin": {"target": "left_leg", "kind": "bend", "parent": "left_leg", "origin": [1.9, 6, 0]},
+    "right_shin": {"target": "right_leg", "kind": "bend", "parent": "right_leg", "origin": [-1.9, 6, 0]}
+  }
+}

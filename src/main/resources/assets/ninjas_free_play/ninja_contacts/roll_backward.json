@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "keys": [
+    {"phase":0,"left":0,"right":0},
+    {"phase":0.15,"left":0,"right":0},
+    {"phase":0.3,"left":1,"right":1},
+    {"phase":0.58,"left":1,"right":1},
+    {"phase":0.75,"left":0,"right":0},
+    {"phase":1,"left":0,"right":0}
+  ]
+}
