@@ -26,7 +26,7 @@ Forearms must bend toward the entity's horizontal forward direction. Check that 
 
 Baking uses the actual vertex bounds of the standard-arm player mesh. The palm endpoint is ten model pixels below the shoulder pivot, rather than the arm's full twelve-pixel length. Side and backward flips rebuild ROOT height during hand support; forward rolls rebuild height from the ground envelope of the deformed mesh. Generated tracks retain time handles and Bezier tangents for velocity continuity and remain editable in Blockbench.
 
-Three JSON files under `src/main/resources/assets/ninjas_free_play/ninja_contacts/` define hand-support weights independently of limb poses. Time is expressed as normalized action phase. Rebake after changing contact timing; runtime duration changes retime contacts using the same phase.
+Three JSON files under `common/src/main/resources/assets/ninjas_free_play/ninja_contacts/` define hand-support weights independently of limb poses. Time is expressed as normalized action phase. Rebake after changing contact timing; runtime duration changes retime contacts using the same phase.
 
 The offline `geometry-contact-sheet.png` visualizes the actual skeleton, mesh dimensions, and bending algorithm with simplified colors. It is a geometry inspection artifact, not a gameplay screenshot or promotional image; it does not include player skins, equipment, or game lighting.
 

@@ -1,0 +1,3 @@
+def values = new Properties()
+file("${rootDir}/../../gradle.properties").withInputStream { values.load(it) }
+values.each { key, value -> if (key.toString().startsWith('mod_')) ext.set(key.toString(), value) }

@@ -1,0 +1,65 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.gradle.userdev' version '7.1.38'
+}
+apply from: '../../gradle/shared-properties.gradle'
+version = mod_version
+group = mod_group_id
+base.archivesName = "${mod_id}-neoforge-${minecraft_version}"
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+def commonProject = project(':common')
+evaluationDependsOn(':common')
+
+// Keep shared classes in the same development mod roots and final JAR, rather than a second runtime mod.
+sourceSets.main.compileClasspath += commonProject.sourceSets.main.output.classesDirs
+sourceSets.main.output.classesDirs.from(commonProject.sourceSets.main.output.classesDirs)
+sourceSets.main.resources.srcDirs 'src/generated/resources', commonProject.sourceSets.main.output.resourcesDir
+sourceSets.main.resources.exclude '**/*.bbmodel', '**/.cache/**'
+tasks.named('compileJava') { dependsOn commonProject.tasks.named('compileJava') }
+tasks.named('processResources') { dependsOn commonProject.tasks.named('processResources') }
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+minecraft.accessTransformers.file file('src/main/resources/META-INF/accesstransformer.cfg')
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        workingDirectory layout.projectDirectory.dir('run').dir(name)
+        modSource sourceSets.main
+    }
+    client { systemProperty 'neoforge.enabledGameTestNamespaces', mod_id }
+    server { systemProperty 'neoforge.enabledGameTestNamespaces', mod_id; argument '--nogui' }
+    gameTestServer {
+        modSource sourceSets.gameTest
+        systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+    }
+    data {
+        arguments.addAll '--mod', mod_id, '--all', '--output', file('src/generated/resources').absolutePath,
+                '--existing', commonProject.file('src/main/resources').absolutePath
+    }
+}
+configurations { runtimeClasspath.extendsFrom localRuntime }
+repositories { mavenCentral() }
+dependencies { implementation "net.neoforged:neoforge:${neo_version}" }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(ProcessResources).configureEach {
+    def properties = [minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+        neo_version: neo_version, loader_version_range: loader_version_range, mod_id: mod_id,
+        mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+        mod_authors: mod_authors, mod_description: mod_description]
+    inputs.properties properties
+    filesMatching('META-INF/neoforge.mods.toml') { expand properties }
+}
+tasks.register('generateAnimations') { dependsOn commonProject.tasks.named('generateAnimations') }
+tasks.register('verifyAnimationCore') { dependsOn commonProject.tasks.named('compileJava'), commonProject.tasks.named('verifyPlatformBoundary') }
+tasks.named('check') { dependsOn commonProject.tasks.named('check') }
+publishing {
+    publications { register('mavenJava', MavenPublication) { from components.java } }
+    repositories { maven { url = layout.projectDirectory.dir('repo') } }
+}
+idea { module { downloadSources = true; downloadJavadoc = true } }

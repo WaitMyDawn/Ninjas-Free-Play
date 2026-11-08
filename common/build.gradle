@@ -1,0 +1,60 @@
+plugins { id 'java-library' }
+
+// A shared checkout can be consumed by independent platform builds without sharing mutable outputs.
+layout.buildDirectory = rootProject.layout.buildDirectory.dir('shared/common')
+def repositoryRoot = rootProject.file('../..')
+def generatedResources = layout.buildDirectory.dir('generated/animation-resources')
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(JavaCompile).configureEach { options.release = 17; options.encoding = 'UTF-8' }
+repositories {
+    maven { url = 'https://maven.neoforged.net/releases' }
+    mavenCentral()
+}
+dependencies {
+    // Minecraft 1.20.1 provides Gson 2.10; shared code must compile against its runtime API.
+    api('com.google.code.gson:gson:2.10') { version { strictly '2.10' } }
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.joml:joml:1.10.5'
+}
+sourceSets {
+    animationTools {
+        java.srcDir new File(repositoryRoot, 'tools/animation-exporter/src/main/java')
+        compileClasspath += sourceSets.main.output.classesDirs + configurations.runtimeClasspath
+        runtimeClasspath += sourceSets.main.output.classesDirs + configurations.runtimeClasspath
+    }
+    main.resources.srcDir generatedResources
+    test {
+        compileClasspath += sourceSets.animationTools.output
+        runtimeClasspath += sourceSets.animationTools.output
+    }
+}
+tasks.register('generateAnimations', JavaExec) {
+    group = 'assets'
+    description = 'Validates the shared Blockbench source and exports animation resources.'
+    classpath = sourceSets.animationTools.runtimeClasspath
+    mainClass = 'yagen.waitmydawn.ninjas_free_play.tools.animation.BlockbenchAnimationExporter'
+    inputs.dir new File(repositoryRoot, 'animations')
+    outputs.dir generatedResources
+    outputs.file layout.buildDirectory.file('reports/animations/export.json')
+    args new File(repositoryRoot, 'animations').absolutePath, generatedResources.get().asFile.absolutePath,
+            layout.buildDirectory.file('reports/animations/export.json').get().asFile.absolutePath
+}
+tasks.named('processResources') { dependsOn 'generateAnimations' }
+tasks.named('test', Test) {
+    dependsOn 'generateAnimations'
+    useJUnitPlatform()
+    systemProperty 'nfp.repositoryRoot', repositoryRoot.absolutePath
+    systemProperty 'nfp.commonRoot', projectDir.absolutePath
+    systemProperty 'nfp.generatedResources', generatedResources.get().asFile.absolutePath
+}
+tasks.register('verifyPlatformBoundary') {
+    inputs.files fileTree('src/main/java') { include '**/*.java' }
+    doLast {
+        inputs.files.each { source ->
+            if (source.getText('UTF-8') =~ /(?m)^import\s+(?:static\s+)?(?:net\.minecraft|net\.neoforged|net\.minecraftforge|net\.fabricmc)\./)
+                throw new GradleException("Platform dependency in shared code: ${source}")
+        }
+    }
+}
+tasks.named('check') { dependsOn 'verifyPlatformBoundary' }

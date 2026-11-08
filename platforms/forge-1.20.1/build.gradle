@@ -1,0 +1,83 @@
+buildscript {
+    repositories { maven { url = 'https://maven.minecraftforge.net/' } }
+    dependencies { classpath 'org.spongepowered:mixingradle:0.7.38' }
+}
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '6.0.54'
+}
+apply plugin: 'org.spongepowered.mixin'
+apply from: '../../gradle/shared-properties.gradle'
+version = mod_version
+group = mod_group_id
+base.archivesName = "${mod_id}-forge-${minecraft_version}"
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+def commonProject = project(':common')
+evaluationDependsOn(':common')
+sourceSets.main.compileClasspath += commonProject.sourceSets.main.output.classesDirs
+sourceSets.main.output.classesDirs.from(commonProject.sourceSets.main.output.classesDirs)
+sourceSets.main.resources.srcDir commonProject.sourceSets.main.output.resourcesDir
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+tasks.named('compileJava') { dependsOn commonProject.tasks.named('compileJava') }
+tasks.named('processResources') { dependsOn commonProject.tasks.named('processResources') }
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    runs {
+        configureEach {
+            workingDirectory file("run/${name}")
+            property 'forge.logging.console.level', 'info'
+            mods { ninjas_free_play { source sourceSets.main } }
+        }
+        client {}
+        server { args '--nogui' }
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            mods { ninjas_free_play { source sourceSets.gameTest } }
+        }
+    }
+}
+repositories { mavenCentral() }
+dependencies { minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}" }
+
+jarJar.enable()
+dependencies {
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.4.1'))
+    implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.4.1')) {
+        jarJar.ranged(it, '[0.4.1,)')
+    }
+}
+mixin {
+    add sourceSets.main, 'ninjas_free_play.refmap.json'
+    config 'ninjas_free_play.movement.mixins.json'
+    config 'ninjas_free_play.mixins.json'
+}
+tasks.withType(JavaCompile).configureEach { options.release = 17; options.encoding = 'UTF-8' }
+tasks.withType(ProcessResources).configureEach {
+    def values = [mod_id: mod_id, mod_name: mod_name, mod_version: mod_version, mod_license: mod_license,
+        mod_authors: mod_authors, mod_description: mod_description, minecraft_version_range: minecraft_version_range,
+        forge_version_range: forge_version_range, loader_version_range: loader_version_range]
+    inputs.properties values
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) { expand values }
+}
+tasks.named('jar') {
+    destinationDirectory = layout.buildDirectory.dir('devlibs')
+    finalizedBy 'reobfJar'
+    manifest.attributes 'MixinConfigs': 'ninjas_free_play.movement.mixins.json,ninjas_free_play.mixins.json'
+}
+tasks.named('jarJar') {
+    archiveClassifier = ''
+    manifest.attributes 'MixinConfigs': 'ninjas_free_play.movement.mixins.json,ninjas_free_play.mixins.json'
+    finalizedBy 'reobfJarJar'
+}
+tasks.named('build') { dependsOn 'jarJar' }
+tasks.named('check') { dependsOn commonProject.tasks.named('check') }
+tasks.register('generateAnimations') { dependsOn commonProject.tasks.named('generateAnimations') }

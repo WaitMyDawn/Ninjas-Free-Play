@@ -24,7 +24,7 @@ These are the default controls. You can rebind them in Minecraft's Controls menu
 
 You have **two jumps** by default. Bullet jumps use the same jump allowance, with **one bullet jump before landing or wall dashing**. You can jump normally and then bullet jump, or bullet jump and then double jump. Walking off a ledge uses the first jump. Landing restores your jumps.
 
-Slides start at ordinary walking speed; sprinting isn't required. The initial slide boost is **1.5x** by default. Rolling carries your existing momentum, so you can roll straight out of a fast bullet jump.
+Slides start at ordinary walking speed; sprinting isn't required. The initial slide boost is **1.5x** by default. Taking damage or being knocked briefly into the air won't cancel your slide. Release **C** to stop. Rolling carries your existing momentum, so you can roll straight out of a fast bullet jump.
 
 Air rolls don't use a jump, but you get one air roll before landing. Forward rolls keep you low; side flips and backward handsprings need more headroom.
 
@@ -59,7 +59,7 @@ Release C after a bullet jump, then press it again to kick. You can kick forward
 
 A kick deals **2 damage** by default and can hit several targets, once each. Faster movement gives stronger knockback, and the target's knockback resistance reduces it. During the hit, you're protected from that target's direct touch damage.
 
-Land during the kick while holding C to flow into a slide, provided you're still moving fast enough.
+Keep holding **C** until you land to flow into a slide, provided you're still moving fast enough horizontally. This also works when the kick animation finishes before you land. Release **C** to end the slide.
 
 Try a chain like this:
 
@@ -132,8 +132,12 @@ For example:
 
 For **Minecraft 1.21.1** with **NeoForge 21.1.235 or newer**. Put the mod in the `mods` folder on your client and server. No additional animation mods are required.
 
+Forge 1.20.1 (47.3.22+) is available as an experimental port with the same movement and camera controls.
+
 Camera and animation settings are in `config/ninjas_free_play/ninjas_free_play-client.toml`. Movement defaults are in `ninjas_free_play-server.toml` under the same configuration folder, or the world's `serverconfig/ninjas_free_play` folder when overridden per world. Server settings control jump counts, movement strength, slide friction, airtime, and flying-kick damage and knockback.
 
 ## License
 
 Copyright © 2026 Yagen. All rights reserved. See [LICENSE.md](LICENSE.md).
+
+For source builds and platform setup, see [DEVELOPMENT.md](DEVELOPMENT.md).

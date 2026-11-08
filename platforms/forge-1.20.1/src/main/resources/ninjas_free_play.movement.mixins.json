@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "yagen.waitmydawn.ninjas_free_play.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "PlayerMovementMixin",
+    "LivingEntityMovementMixin",
+    "ContactCollisionMixin",
+    "ServerMovementGuardMixin",
+    "EntityCollisionAccessor"
+  ],
+  "client": [
+    "client.LivingEntityInputAccessor",
+    "client.LocalPlayerMovementMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "ninjas_free_play.refmap.json"
+}

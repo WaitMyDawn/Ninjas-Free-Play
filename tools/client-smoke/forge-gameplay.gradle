@@ -1,0 +1,16 @@
+gradle.afterProject { project ->
+    if (project != project.rootProject) return
+    def port = project.findProperty('nfpLoopbackPort')?.toString()
+    if (port == null || !(port ==~ /[0-9]+/) || port.toInteger() < 1 || port.toInteger() > 65535)
+        throw new GradleException('Set -PnfpLoopbackPort to the disposable loopback server port.')
+    def probe = project.sourceSets.create('gameplaySmoke')
+    probe.java.srcDir(project.file('../../tools/client-smoke/src/forge-gameplay/java'))
+    probe.compileClasspath += project.sourceSets.main.output + project.sourceSets.main.compileClasspath
+    probe.runtimeClasspath += probe.output + probe.compileClasspath + project.sourceSets.main.runtimeClasspath
+    project.minecraft.runs.client {
+        workingDirectory project.layout.buildDirectory.dir('tmp/gameplay-smoke-instance').get().asFile
+        property 'nfp.loopback.port', port
+        property 'nfp.gameplay.result', project.file('../../build/tmp/forge-gameplay-result.json').absolutePath
+        mods { ninjas_free_play { source probe } }
+    }
+}

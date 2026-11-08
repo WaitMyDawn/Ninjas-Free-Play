@@ -1,0 +1,11 @@
+gradle.afterProject { project ->
+    if (project != project.rootProject) return
+    def probe = project.sourceSets.create('foundationSmoke')
+    probe.java.srcDir(project.file('../../tools/client-smoke/src/forge/java'))
+    probe.compileClasspath += project.sourceSets.main.output + project.sourceSets.main.compileClasspath
+    probe.runtimeClasspath += probe.output + probe.compileClasspath + project.sourceSets.main.runtimeClasspath
+    project.minecraft.runs.client {
+        workingDirectory project.layout.buildDirectory.dir('tmp/foundation-smoke-instance').get().asFile
+        mods { ninjas_free_play { source probe } }
+    }
+}

@@ -66,7 +66,7 @@ public final class BlockbenchAnimationExporter {
         requireEqual(positionSigns, new double[]{1, -1, 1}, "Unexpected humanoid_v1 position convention");
         requireEqual(rotationSigns, new double[]{-1, 1, -1}, "Unexpected humanoid_v1 rotation convention");
         JsonObject bindings = manifest.getAsJsonObject("bones");
-        if (bindings == null || bindings.isEmpty())
+        if (bindings == null || bindings.size() == 0)
             throw new IllegalArgumentException("Explicit bone bindings are required");
         TreeMap<String, String> generated = new TreeMap<>();
         JsonObject coordinateSpaces = manifest.has("coordinate_spaces") ? manifest.getAsJsonObject("coordinate_spaces") : new JsonObject();

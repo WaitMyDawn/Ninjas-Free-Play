@@ -230,7 +230,7 @@ for name in ['roll_left','roll_right','roll_backward']:
     if not args.bake_only and name not in selected:
         continue
     animation=project.animation(name)
-    profile=json.loads((root/f'src/main/resources/assets/ninjas_free_play/ninja_contacts/{name}.json').read_text())['keys']
+    profile=json.loads((root/f'common/src/main/resources/assets/ninjas_free_play/ninja_contacts/{name}.json').read_text())['keys']
     samples=[]
     for index in range(37):
         time=animation.length*index/36

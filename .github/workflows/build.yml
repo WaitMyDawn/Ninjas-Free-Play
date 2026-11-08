@@ -1,25 +1,52 @@
 name: Build
-
 on: [push, pull_request]
-
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: neoforge-1.21.1
+            java: '21'
+            loader: '21.1.235'
+            loaderProperty: neo_version
+          - platform: forge-1.20.1
+            java: '17'
+            loader: '47.3.22'
+            loaderProperty: forge_version
+          - platform: forge-1.20.1
+            java: '17'
+            loader: '47.4.28'
+            loaderProperty: forge_version
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Setup JDK 21
+      - uses: actions/checkout@v4
+      - name: Install shared Java 17 toolchain
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build with Gradle
-        run: ./gradlew build
+          java-version: '17'
+          distribution: temurin
+      - name: Select platform JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test
+        working-directory: platforms/${{ matrix.platform }}
+        run: bash ./gradlew --no-daemon build runGameTestServer -P${{ matrix.loaderProperty }}=${{ matrix.loader }}
+      - name: Upload mod JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfp-${{ matrix.platform }}-${{ matrix.loader }}
+          path: platforms/${{ matrix.platform }}/build/libs/*.jar
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-${{ matrix.platform }}-${{ matrix.loader }}
+          path: |
+            platforms/${{ matrix.platform }}/build/shared/common/reports/tests/
+            platforms/${{ matrix.platform }}/build/reports/
+            platforms/${{ matrix.platform }}/build/shared/common/test-results/
+            platforms/${{ matrix.platform }}/run/gameTestServer/logs/latest.log
