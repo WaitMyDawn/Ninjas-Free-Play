@@ -1,6 +1,6 @@
 # Development
 
-The repository contains independent platform builds and a shared Java 17 library. NeoForge 1.21.1 is the primary platform. Forge 1.20.1 and Fabric 1.21.1 have separate platform adapters and verification targets.
+The repository contains independent platform builds and a shared Java 17 library. NeoForge 1.21.1 is the primary platform. Forge 1.20.1 and the Fabric builds for 1.21.1, 1.21.11, and 26.3 have separate platform adapters and verification targets.
 
 ## Projects
 
@@ -10,6 +10,8 @@ The repository contains independent platform builds and a shared Java 17 library
 | `platforms/neoforge-1.21.1/` | Minecraft and NeoForge integration, rendering, networking, and GameTests | Java 21, Gradle 9.2.1 |
 | `platforms/forge-1.20.1/` | Minecraft 1.20.1 / Forge integration, rendering, networking, and GameTests | Java 17, ForgeGradle 6.0.54, Gradle 8.14.3 |
 | `platforms/fabric-1.21.1/` | Minecraft 1.21.1 / Fabric integration, rendering, networking, and GameTests | Java 21, Loom 1.14.10, Gradle 9.2.1 |
+| `platforms/fabric-1.21.11/` | Minecraft 1.21.11 / Fabric integration, rendering, networking, and GameTests | Java 21, Loom 1.14.10, Gradle 9.2.1 |
+| `platforms/fabric-26.3/` | Minecraft 26.3 / Fabric integration, rendering, networking, and GameTests | Java 25, Loom 1.17.21, Gradle 9.6.0 |
 | `animations/` | The single Blockbench source project and manifest | Shared by all platforms |
 | `tools/` | Exporter, optional authoring tools, and client probes | See each tool's README |
 
@@ -19,22 +21,23 @@ The shared compile and test classpaths pin Gson to 2.10, the version supplied by
 
 ## IDEA and Java
 
-Install JDK 17 and JDK 21. Link the `build.gradle` file in each platform directory as an independent Gradle project in IDEA. Keep builds and tests delegated to Gradle. Run configurations belong to their platform.
+Install JDK 17 and JDK 21. Install JDK 25 to build Fabric 26.3 or run the root build. Link the `build.gradle` file in each platform directory as an independent Gradle project in IDEA. Keep builds and tests delegated to Gradle. Run configurations belong to their platform.
 
 IDEA's **Gradle JVM** runs Gradle itself. The Java toolchains declared in the build scripts select the compilers and test runtimes. Selecting a project SDK such as `ms-25` for the Gradle JVM does not change the mod's Java target.
 
 | Build | Gradle JVM | Project toolchain |
 | --- | --- | --- |
-| Root orchestrator | Java 21 recommended; Java 25 supported by Gradle 9.2.1 | Selects Java 21 for NeoForge and Fabric, and Java 17 for Forge |
+| Root orchestrator | Java 21 recommended; Java 25 supported by Gradle 9.2.1 | Selects Java 25 for Fabric 26.3, Java 17 for Forge, and Java 21 for the other builds |
 | NeoForge 1.21.1 | Java 21 recommended to match CI; Java 25 supported by Gradle 9.2.1 | Java 21; shared code and exporter use Java 17 |
 | Forge 1.20.1 | Use Java 17; Gradle 8.14.3 does not support running on Java 25 | Java 17 |
-| Fabric 1.21.1 | Java 21 | Java 21; shared code and exporter use Java 17 |
+| Fabric 1.21.1 and 1.21.11 | Java 21 | Java 21; shared code and exporter use Java 17 |
+| Fabric 26.3 | Java 25 | Java 25; shared code and exporter use Java 17 |
 
 An existing NeoForge Gradle JVM set to Java 25 can be retained. JDK 17 and JDK 21 must still be available for the declared toolchains. Successful synchronization confirms project import; build, GameTest, and client startup checks remain separate validation steps. The Java 21/17 build and game-runtime baselines remain unchanged.
 
 See Gradle's [Java compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) and [toolchain guide](https://docs.gradle.org/current/userguide/toolchains.html).
 
-Gradle can discover installations through `JAVA_HOME_17_X64` and `JAVA_HOME_21_X64`. For other installation layouts, set `org.gradle.java.installations.paths` in local Gradle user properties or pass it as a project property. Keep machine-specific paths out of the repository.
+Gradle can discover installations through `JAVA_HOME_17_X64`, `JAVA_HOME_21_X64`, and `JAVA_HOME_25_X64`. For other installation layouts, set `org.gradle.java.installations.paths` in local Gradle user properties or pass it as a project property. Keep machine-specific paths out of the repository.
 
 ## Building
 
@@ -45,10 +48,12 @@ From the repository root on Windows:
 .\gradlew.bat buildNeoForge
 .\gradlew.bat buildForge
 .\gradlew.bat buildFabric
+.\gradlew.bat buildFabric12111
+.\gradlew.bat buildFabric263
 .\gradlew.bat generateAnimations
 ```
 
-The root orchestrator invokes each platform wrapper with its required JDK and propagates failures. `check` checks every platform, and `clean` clears platform build outputs.
+The root orchestrator invokes each platform wrapper with its required JDK and propagates failures. It runs Fabric wrappers one at a time because they share Loom's Gradle user cache. `check` checks every platform, and `clean` clears platform build outputs.
 
 Run platform tasks explicitly:
 
@@ -59,11 +64,15 @@ Run platform tasks explicitly:
 .\platforms\forge-1.20.1\gradlew.bat -p platforms/forge-1.20.1 runGameTestServer
 .\gradlew.bat -p platforms/fabric-1.21.1 runClient
 .\gradlew.bat -p platforms/fabric-1.21.1 runGameTestServer
+.\gradlew.bat -p platforms/fabric-1.21.11 runClient
+.\gradlew.bat -p platforms/fabric-1.21.11 runGameTestServer
+.\platforms\fabric-26.3\gradlew.bat -p platforms/fabric-26.3 runClient
+.\platforms\fabric-26.3\gradlew.bat -p platforms/fabric-26.3 runGameTestServer
 ```
 
 On Linux, enter a platform directory and run `bash ./gradlew <task>`. Test another Forge 47.x version with `-Pforge_version=<version>`.
 
-Mod JARs are written to each platform's `build/libs`. Filenames include the loader, Minecraft version, and shared mod version. Root `gradle.properties` maintains shared mod metadata; platform properties maintain Minecraft and loader versions.
+Each platform writes its release JAR to its own `build/libs`. The root `build` task copies the current release JARs into the root `build/libs` after all platform builds succeed. Root `clean` also removes the collected output. Filenames include the loader, Minecraft version, and shared mod version. Root `gradle.properties` maintains shared mod metadata, and platform properties maintain Minecraft and loader versions.
 
 The Forge distributable includes MixinExtras 0.4.1 through Jar-in-Jar. Players install the single JAR in `build/libs`; unbundled intermediate JARs in `build/devlibs` are development artifacts. MixinGradle generates the refmap and remaps both distributable and intermediate artifacts. Keep both mixin configurations, the refmap, and the nested dependency metadata in the distributable.
 
@@ -97,13 +106,19 @@ Local loopback verification also exercised a real client connection to the distr
 
 ## Fabric Platform Adapter
 
-The Fabric target pins Minecraft 1.21.1, Fabric Loader 0.20.1, and Fabric API 0.116.17+1.21.1. Loom uses Mojang mappings and remaps the final JAR. The JAR contains the shared code and assets and nests NightConfig's TOML and core libraries. Install Fabric API alongside the mod.
+All Fabric targets pin Fabric Loader 0.20.1. Their Fabric API versions are 0.116.17+1.21.1, 0.141.6+1.21.11, and 0.165.2+26.3. Loom remaps the 1.21.x JARs to Intermediary. The 26.3 build uses the unobfuscated game names and publishes the standard `jar` output. Each JAR contains the shared code and assets and nests NightConfig's TOML and core libraries. Install the matching Fabric API alongside the mod.
+
+Minecraft 1.21.11 extracts player animation into the avatar's render state. Model submission and deferred drawing read the same sample for root transforms, the body, armor, and held items. Outer skin layers inherit the part transforms and receive their own mesh bends. The automatic reticle uses the reach-limited hit after picking and the projection uploaded for the world pass.
+
+Minecraft 26.3 uses SDL scancodes from `InputConstants` for key mappings. The camera is offset before vanilla builds its frustum, and the automatic reticle is projected before HUD extraction using the same view and projection effects as the world pass. The movement adapter applies retention to the collision-resolved horizontal velocity and keeps vanilla's vertical result.
 
 Movement payload identifiers carry the wire version. Fabric Networking validates the connection and invokes movement handlers on the logical game thread. Register Fabric action listeners through `MovementActionEvent.EVENT` and read phases through `getActionPhase()`. The flying kick applies its 3D impulse with vanilla knockback resistance. Integrations that listen for Forge or NeoForge knockback events need a Fabric adapter.
 
 Fabric loads the same TOML settings and migrates the same defaults. A `serverconfig` file in the active world overrides the global server configuration. Edit the server file and use `/reload` to apply new default attribute bases to connected players. Explicit player bases and permanent modifiers are retained.
 
 The isolated test mod supplies the GameTests and the loopback client probe. `runGameTestServer` writes `build/reports/gametest.xml`. To run the client probe against a matching Fabric server on a disposable, peaceful flat world, invoke `runGameTestClient -PnfpLoopbackPort=25565`. It exercises the two reticles and synchronized movement chains, then writes `build/reports/gameplay-smoke.json` and exits.
+
+On Fabric 26.3, add `-PnfpServerFirstLanding` to defer local slide prediction until the server confirms the flying kick's landing. The probe checks that the transition applies exactly one speed boost.
 
 ## Verification and Releases
 

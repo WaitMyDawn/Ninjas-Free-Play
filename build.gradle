@@ -1,9 +1,19 @@
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
+
 plugins { id 'jvm-toolchains' }
 
-def windows = System.getProperty('os.name').toLowerCase().contains('windows')
+abstract class LoomCacheAccess implements BuildService<BuildServiceParameters.None> {}
 
-def platformTask = { String name, String platform, int javaVersion, String task ->
+def windows = System.getProperty('os.name').toLowerCase().contains('windows')
+def loomCache = gradle.sharedServices.registerIfAbsent('fabricLoomCache', LoomCacheAccess) {
+    // The remapped Fabric builds resolve layered mappings through the same Gradle user cache.
+    maxParallelUsages = 1
+}
+
+def platformTask = { String name, String platform, int javaVersion, String task, boolean loom ->
     tasks.register(name, Exec) {
+        if (loom) usesService(loomCache)
         def launcher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(javaVersion) }
         environment 'JAVA_HOME', launcher.get().metadata.installationPath.asFile.absolutePath
         workingDir layout.projectDirectory.dir("platforms/${platform}")
@@ -14,17 +24,38 @@ def platformTask = { String name, String platform, int javaVersion, String task 
         if (installations) args "-Porg.gradle.java.installations.paths=${installations}"
     }
 }
-platformTask('buildNeoForge', 'neoforge-1.21.1', 21, 'build')
-platformTask('checkNeoForge', 'neoforge-1.21.1', 21, 'check')
-platformTask('cleanNeoForge', 'neoforge-1.21.1', 21, 'clean')
-platformTask('buildForge', 'forge-1.20.1', 17, 'build')
-platformTask('checkForge', 'forge-1.20.1', 17, 'check')
-platformTask('cleanForge', 'forge-1.20.1', 17, 'clean')
-platformTask('buildFabric', 'fabric-1.21.1', 21, 'build')
-platformTask('checkFabric', 'fabric-1.21.1', 21, 'check')
-platformTask('cleanFabric', 'fabric-1.21.1', 21, 'clean')
-platformTask('generateAnimations', 'neoforge-1.21.1', 21, ':common:generateAnimations')
-platformTask('verifyAnimationCore', 'neoforge-1.21.1', 21, 'verifyAnimationCore')
-tasks.register('build') { dependsOn 'buildNeoForge', 'buildForge', 'buildFabric' }
-tasks.register('check') { dependsOn 'checkNeoForge', 'checkForge', 'checkFabric' }
-tasks.register('clean') { dependsOn 'cleanNeoForge', 'cleanForge', 'cleanFabric' }
+def platforms = [
+    NeoForge: [directory: 'neoforge-1.21.1', javaVersion: 21],
+    Forge: [directory: 'forge-1.20.1', javaVersion: 17],
+    Fabric: [directory: 'fabric-1.21.1', javaVersion: 21, loom: true],
+    Fabric12111: [directory: 'fabric-1.21.11', javaVersion: 21, loom: true],
+    Fabric263: [directory: 'fabric-26.3', javaVersion: 25, loom: true]
+]
+def platformTasks = { String action ->
+    platforms.collect { suffix, target ->
+        platformTask("${action}${suffix}", target.directory, target.javaVersion, action, target.loom == true)
+    }
+}
+def builds = platformTasks('build')
+def checks = platformTasks('check')
+def cleans = platformTasks('clean')
+
+platformTask('generateAnimations', 'neoforge-1.21.1', 21, ':common:generateAnimations', false)
+platformTask('verifyAnimationCore', 'neoforge-1.21.1', 21, 'verifyAnimationCore', false)
+
+def releaseDirectory = layout.buildDirectory.dir('libs')
+def releaseJars = platforms.values().collect { target ->
+    layout.projectDirectory.file("platforms/${target.directory}/build/libs/${mod_id}-${target.directory}-${mod_version}.jar")
+}
+def collectReleaseJars = tasks.register('collectReleaseJars', Sync) {
+    dependsOn builds
+    from releaseJars
+    into releaseDirectory
+}
+
+tasks.register('build') { dependsOn collectReleaseJars }
+tasks.register('check') { dependsOn checks }
+tasks.register('clean', Delete) {
+    dependsOn cleans
+    delete releaseDirectory
+}

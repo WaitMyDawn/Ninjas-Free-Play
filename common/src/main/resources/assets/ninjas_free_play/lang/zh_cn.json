@@ -8,6 +8,7 @@
   "attribute.ninjas_free_play.roll_duration": "翻滚时长",
   "attribute.ninjas_free_play.roll_cooldown": "翻滚间隔",
   "key.categories.ninjas_free_play": "Ninjas Free Play",
+  "key.category.ninjas_free_play.movement": "Ninjas Free Play",
   "key.ninjas_free_play.crouch": "动作下蹲（按住）",
   "command.ninjas_free_play.animation.aim": "预览发射俯仰：%s 度；负数朝上，aim reset 恢复镜头俯仰。",
   "attribute.ninjas_free_play.bullet_jump_strength": "子弹跳动力",

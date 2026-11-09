@@ -22,6 +22,14 @@ jobs:
             java: '21'
             loader: '0.20.1'
             loaderProperty: fabric_loader_version
+          - platform: fabric-1.21.11
+            java: '21'
+            loader: '0.20.1'
+            loaderProperty: fabric_loader_version
+          - platform: fabric-26.3
+            java: '25'
+            loader: '0.20.1'
+            loaderProperty: fabric_loader_version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

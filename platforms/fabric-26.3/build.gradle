@@ -1,0 +1,78 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+apply from: '../../gradle/shared-properties.gradle'
+version = mod_version
+group = mod_group_id
+base.archivesName = "${mod_id}-fabric-${minecraft_version}"
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+def commonProject = project(':common')
+evaluationDependsOn(':common')
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+
+repositories { mavenCentral() }
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation commonProject.sourceSets.main.output
+    implementation 'com.electronwill.night-config:core:3.8.3'
+    implementation 'com.electronwill.night-config:toml:3.8.3'
+    include 'com.electronwill.night-config:core:3.8.3'
+    include 'com.electronwill.night-config:toml:3.8.3'
+}
+
+loom {
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+            sourceSet commonProject.sourceSets.main
+        }
+        ninjas_free_play_fabric_test { sourceSet sourceSets.gameTest }
+    }
+    runs {
+        client { runDir 'run/client'; ideConfigGenerated true }
+        server { runDir 'run/server'; ideConfigGenerated true }
+        gameTestServer {
+            server()
+            source sourceSets.gameTest
+            runDir 'run/gameTestServer'
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=${layout.buildDirectory.file('reports/gametest.xml').get().asFile}"
+        }
+        gameTestClient {
+            client()
+            source sourceSets.gameTest
+            runDir 'build/tmp/gameplay-smoke-instance'
+            def loopbackPort = providers.gradleProperty('nfpLoopbackPort')
+            if (loopbackPort.present) {
+                vmArg "-Dnfp.loopback.port=${loopbackPort.get()}"
+                vmArg "-Dnfp.gameplay.result=${layout.buildDirectory.file('reports/gameplay-smoke.json').get().asFile}"
+                if (providers.gradleProperty('nfpServerFirstLanding').isPresent()) vmArg '-Dnfp.gameplay.serverFirstLanding=true'
+            }
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.named('processResources') {
+    def properties = [mod_id: mod_id, mod_name: mod_name, mod_version: mod_version,
+        mod_license: mod_license, mod_authors: mod_authors, mod_description: mod_description,
+        minecraft_version: minecraft_version, fabric_loader_version: fabric_loader_version,
+        fabric_api_version: fabric_api_version]
+    inputs.properties properties
+    filesMatching('fabric.mod.json') { expand properties }
+}
+
+tasks.named('jar') {
+    dependsOn commonProject.tasks.named('classes')
+    from commonProject.sourceSets.main.output
+}
+tasks.named('check') { dependsOn commonProject.tasks.named('check') }

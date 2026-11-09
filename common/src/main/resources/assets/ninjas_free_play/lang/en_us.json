@@ -8,6 +8,7 @@
   "attribute.ninjas_free_play.roll_duration": "Roll Duration",
   "attribute.ninjas_free_play.roll_cooldown": "Roll Cooldown",
   "key.categories.ninjas_free_play": "Ninjas Free Play",
+  "key.category.ninjas_free_play.movement": "Ninjas Free Play",
   "key.ninjas_free_play.crouch": "Movement Crouch (Hold)",
   "command.ninjas_free_play.animation.aim": "Preview launch pitch: %s degrees. Negative values aim upward; aim reset restores camera pitch.",
   "attribute.ninjas_free_play.bullet_jump_strength": "Bullet Jump Strength",
