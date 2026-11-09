@@ -18,6 +18,10 @@ jobs:
             java: '17'
             loader: '47.4.28'
             loaderProperty: forge_version
+          - platform: fabric-1.21.1
+            java: '21'
+            loader: '0.20.1'
+            loaderProperty: fabric_loader_version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

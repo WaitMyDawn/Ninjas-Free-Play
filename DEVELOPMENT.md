@@ -1,6 +1,6 @@
 # Development
 
-The repository contains independent platform builds and a shared Java 17 library. NeoForge 1.21.1 is the primary platform. The Forge 1.20.1 gameplay port is implemented and undergoing platform-specific acceptance.
+The repository contains independent platform builds and a shared Java 17 library. NeoForge 1.21.1 is the primary platform. Forge 1.20.1 and Fabric 1.21.1 have separate platform adapters and verification targets.
 
 ## Projects
 
@@ -9,7 +9,8 @@ The repository contains independent platform builds and a shared Java 17 library
 | `common/` | Movement rules, animation playback/codecs, camera math, action-state types, assets, and unit tests | Java 17 |
 | `platforms/neoforge-1.21.1/` | Minecraft and NeoForge integration, rendering, networking, and GameTests | Java 21, Gradle 9.2.1 |
 | `platforms/forge-1.20.1/` | Minecraft 1.20.1 / Forge integration, rendering, networking, and GameTests | Java 17, ForgeGradle 6.0.54, Gradle 8.14.3 |
-| `animations/` | The single Blockbench source project and manifest | Shared by both platforms |
+| `platforms/fabric-1.21.1/` | Minecraft 1.21.1 / Fabric integration, rendering, networking, and GameTests | Java 21, Loom 1.14.10, Gradle 9.2.1 |
+| `animations/` | The single Blockbench source project and manifest | Shared by all platforms |
 | `tools/` | Exporter, optional authoring tools, and client probes | See each tool's README |
 
 Each platform includes `common` as a plain Java project. Shared classes compile to Java 17 bytecode and join the platform's development mod roots and final JAR. Players do not install a separate common mod. Shared outputs live under `platforms/<platform>/build/shared/common`, preventing concurrent builds from overwriting each other.
@@ -24,9 +25,10 @@ IDEA's **Gradle JVM** runs Gradle itself. The Java toolchains declared in the bu
 
 | Build | Gradle JVM | Project toolchain |
 | --- | --- | --- |
-| Root orchestrator | Java 21 recommended; Java 25 supported by Gradle 9.2.1 | Selects Java 21 for the NeoForge wrapper and Java 17 for Forge |
+| Root orchestrator | Java 21 recommended; Java 25 supported by Gradle 9.2.1 | Selects Java 21 for NeoForge and Fabric, and Java 17 for Forge |
 | NeoForge 1.21.1 | Java 21 recommended to match CI; Java 25 supported by Gradle 9.2.1 | Java 21; shared code and exporter use Java 17 |
 | Forge 1.20.1 | Use Java 17; Gradle 8.14.3 does not support running on Java 25 | Java 17 |
+| Fabric 1.21.1 | Java 21 | Java 21; shared code and exporter use Java 17 |
 
 An existing NeoForge Gradle JVM set to Java 25 can be retained. JDK 17 and JDK 21 must still be available for the declared toolchains. Successful synchronization confirms project import; build, GameTest, and client startup checks remain separate validation steps. The Java 21/17 build and game-runtime baselines remain unchanged.
 
@@ -42,10 +44,11 @@ From the repository root on Windows:
 .\gradlew.bat build
 .\gradlew.bat buildNeoForge
 .\gradlew.bat buildForge
+.\gradlew.bat buildFabric
 .\gradlew.bat generateAnimations
 ```
 
-The root orchestrator invokes each platform wrapper with its required JDK and propagates failures. `check` checks both platforms; `clean` clears platform outputs. Neither command removes the legacy root-level run instances.
+The root orchestrator invokes each platform wrapper with its required JDK and propagates failures. `check` checks every platform, and `clean` clears platform build outputs.
 
 Run platform tasks explicitly:
 
@@ -54,6 +57,8 @@ Run platform tasks explicitly:
 .\gradlew.bat -p platforms/neoforge-1.21.1 runGameTestServer
 .\platforms\forge-1.20.1\gradlew.bat -p platforms/forge-1.20.1 runClient
 .\platforms\forge-1.20.1\gradlew.bat -p platforms/forge-1.20.1 runGameTestServer
+.\gradlew.bat -p platforms/fabric-1.21.1 runClient
+.\gradlew.bat -p platforms/fabric-1.21.1 runGameTestServer
 ```
 
 On Linux, enter a platform directory and run `bash ./gradlew <task>`. Test another Forge 47.x version with `-Pforge_version=<version>`.
@@ -90,8 +95,18 @@ Automated checks cover shared rules, real movement/collision/damage behavior, ev
 
 Local loopback verification also exercised a real client connection to the distributable running on a stock Forge 47.3.22 server: crouch, bullet jump, air roll with carried momentum, glide, walking into a slide, and a held-C flying kick landing into a slide received authoritative acknowledgements. Both NFP reticles were visible after world rendering, each slide ended on C release, and the sequence required no movement corrections. The isolated probe retried an initial FML login timeout before completing the check. This covers one client and one disposable server; observer synchronization, full equipment combinations, visual quality, dimension changes, in-world reconnects, and latency remain separate acceptance work.
 
+## Fabric Platform Adapter
+
+The Fabric target pins Minecraft 1.21.1, Fabric Loader 0.20.1, and Fabric API 0.116.17+1.21.1. Loom uses Mojang mappings and remaps the final JAR. The JAR contains the shared code and assets and nests NightConfig's TOML and core libraries. Install Fabric API alongside the mod.
+
+Movement payload identifiers carry the wire version. Fabric Networking validates the connection and invokes movement handlers on the logical game thread. Register Fabric action listeners through `MovementActionEvent.EVENT` and read phases through `getActionPhase()`. The flying kick applies its 3D impulse with vanilla knockback resistance. Integrations that listen for Forge or NeoForge knockback events need a Fabric adapter.
+
+Fabric loads the same TOML settings and migrates the same defaults. A `serverconfig` file in the active world overrides the global server configuration. Edit the server file and use `/reload` to apply new default attribute bases to connected players. Explicit player bases and permanent modifiers are retained.
+
+The isolated test mod supplies the GameTests and the loopback client probe. `runGameTestServer` writes `build/reports/gametest.xml`. To run the client probe against a matching Fabric server on a disposable, peaceful flat world, invoke `runGameTestClient -PnfpLoopbackPort=25565`. It exercises the two reticles and synchronized movement chains, then writes `build/reports/gameplay-smoke.json` and exits.
+
 ## Verification and Releases
 
 Run shared tests and platform GameTests before publishing. Compare generated animations when changing the export pipeline. Check dedicated-server startup and keep client-only classes out of server initialization. Visual and multiplayer acceptance remain platform-specific.
 
-CI builds NeoForge and minimum/newer Forge versions separately. Keep shared changes and their platform adapters together on `main`; use temporary feature branches for incomplete work. Generated outputs, caches, local instances, and authoring backups remain ignored.
+CI builds Fabric, NeoForge, and minimum/newer Forge versions separately. Keep shared changes and their platform adapters together on `main`. Use temporary feature branches for incomplete work. Generated outputs, caches, local instances, and authoring backups remain ignored.

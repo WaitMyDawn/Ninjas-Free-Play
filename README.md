@@ -134,6 +134,8 @@ For **Minecraft 1.21.1** with **NeoForge 21.1.235 or newer**. Put the mod in the
 
 Forge 1.20.1 (47.3.22+) is available as an experimental port with the same movement and camera controls.
 
+Fabric 1.21.1 is available as an experimental port. Install Fabric Loader 0.20.1 or newer and Fabric API 0.116.17+1.21.1 or a compatible update on both client and server.
+
 Camera and animation settings are in `config/ninjas_free_play/ninjas_free_play-client.toml`. Movement defaults are in `ninjas_free_play-server.toml` under the same configuration folder, or the world's `serverconfig/ninjas_free_play` folder when overridden per world. Server settings control jump counts, movement strength, slide friction, airtime, and flying-kick damage and knockback.
 
 ## License

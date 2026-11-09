@@ -20,8 +20,11 @@ platformTask('cleanNeoForge', 'neoforge-1.21.1', 21, 'clean')
 platformTask('buildForge', 'forge-1.20.1', 17, 'build')
 platformTask('checkForge', 'forge-1.20.1', 17, 'check')
 platformTask('cleanForge', 'forge-1.20.1', 17, 'clean')
+platformTask('buildFabric', 'fabric-1.21.1', 21, 'build')
+platformTask('checkFabric', 'fabric-1.21.1', 21, 'check')
+platformTask('cleanFabric', 'fabric-1.21.1', 21, 'clean')
 platformTask('generateAnimations', 'neoforge-1.21.1', 21, ':common:generateAnimations')
 platformTask('verifyAnimationCore', 'neoforge-1.21.1', 21, 'verifyAnimationCore')
-tasks.register('build') { dependsOn 'buildNeoForge', 'buildForge' }
-tasks.register('check') { dependsOn 'checkNeoForge', 'checkForge' }
-tasks.register('clean') { dependsOn 'cleanNeoForge', 'cleanForge' }
+tasks.register('build') { dependsOn 'buildNeoForge', 'buildForge', 'buildFabric' }
+tasks.register('check') { dependsOn 'checkNeoForge', 'checkForge', 'checkFabric' }
+tasks.register('clean') { dependsOn 'cleanNeoForge', 'cleanForge', 'cleanFabric' }
